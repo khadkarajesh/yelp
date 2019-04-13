@@ -1,0 +1,8 @@
+{
+    "app":{
+        "dbConfig":{
+            "host":"localhost",
+            "dbName":"yelp-nepal"
+        }
+    }
+}
