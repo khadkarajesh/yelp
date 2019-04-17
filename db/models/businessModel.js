@@ -17,7 +17,6 @@ var schema = mongoose.Schema({
         type: [Number],
         required: true
     },
-    //businessHours: [businessHour],
     businessHours: [{
         opening_hour: { type: String, required: true },
         day: { type: String, required: true },
@@ -26,12 +25,7 @@ var schema = mongoose.Schema({
     website: {
         type: String
     },
-    // phone: [{
-    //     type: Number,
-    //     enum: ['work_number', 'mobile_number'],
-    //     required: true,
-    //     default: 'work'
-    // }],
+    categoryId: { type: String, required: true },
     phone: [{
         work_number: {
             type: Number,

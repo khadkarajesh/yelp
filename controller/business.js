@@ -1,10 +1,10 @@
 var Business = require('../db/models/businessModel')
-var upload = require('../services/aws_image_uploader')
 
 exports.create = function (req, res) {
     var business = new Business({
         name: req.body.name,
         description: req.body.description,
+        categoryId:req.body.categoryId,
         address:req.body.address,
         coordinates: req.body.coordinates,
         businessHours:req.body.businessHours,

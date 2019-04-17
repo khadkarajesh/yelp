@@ -1,7 +1,8 @@
 var express = require('express')
 var bodyparser = require('body-parser')
-var Business = require('../yelp-backend/routes/business')
 var mongoose = require('mongoose')
+var Business = require('./routes/business')
+var Category = require('./routes/category')
 var multer = require('multer')
 var morgan = require('morgan')
 var morgonBody = require('morgan-body')
@@ -19,6 +20,7 @@ app.use(bodyparser.json())
 morgonBody(app)
 app.use(bodyparser.urlencoded({ extended: true }))
 app.use('/business', Business)
+app.use('/category', Category)
 
 
 mongoose.connect(`mongodb://${dbConfig.host}/${dbConfig.dbName}}`, { useNewUrlParser: true })
