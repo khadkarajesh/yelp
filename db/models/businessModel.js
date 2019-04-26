@@ -25,7 +25,10 @@ var schema = mongoose.Schema({
     website: {
         type: String
     },
-    categoryId: { type: String, required: true },
+    categoryId: {
+        type: String,
+        required: true
+    },
     phone: [{
         work_number: {
             type: Number,
