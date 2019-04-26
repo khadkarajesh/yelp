@@ -18,6 +18,7 @@
   "homepage": "https://github.com/khadkarajesh/crit-backend#readme",
   "dependencies": {
     "aws-sdk": "^2.437.0",
+    "bcrypt": "^3.0.6",
     "body-parser": "^1.18.3",
     "config": "^3.1.0",
     "dotenv": "^7.0.0",
