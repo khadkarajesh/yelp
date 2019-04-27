@@ -7,21 +7,26 @@ const AppError = require('../helpers/AppError')
 exports.signup = async function (req, res, next) {
     try {
         var user = await User.findOne({ email: req.body.email })
-        if (user) return res.status(409).json({ error: { message: "This email is already registered", code: 409 } })
-        if (!req.body.password.match('/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,16}$/')){
-            throw new AppError("Password must be length of min 6 must contain at least one number and special case", 400)
+        if (user) throw new AppError("This email is already registered", 409)
+        var valid = /^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{6,}$/.test(req.body.password)
+        if (!valid) {
+            throw new AppError("Password must be length of min 6 must contain at least 1 number,1 lowercase, 1 capital letter, 1 special character", 400)
         }
         var salt = await bcrypt.genSalt(10)
         var hash = await bcrypt.hash(req.body.password, salt)
+
+        var accessToken = await jwt.sign({ email: req.body.email }, process.env.APP_SECRET_KEY, { expiresIn: 60 * 60 })
+        var refreshToken = await jwt.sign({ email: req.body.email }, process.env.APP_SECRET_KEY, { expiresIn: 24 * 60 * 60 })
+
         var newUser = await new User({
             first_name: req.body.first_name,
             middle_name: req.body.middle_name,
             last_name: req.body.last_name,
             email: req.body.email,
-            password: hash
+            password: hash,
+            refreshToken: refreshToken
         }).save()
-        var accessToken = await jwt.sign({ email: newUser.email }, process.env.APP_SECRET_KEY, { expiresIn: 60 * 60 })
-        var refreshToken = await jwt.sign({ email: newUser.email }, process.env.APP_SECRET_KEY, { expiresIn: 24 * 60 * 60 })
+
         res.json({ message: "success", accessToken: accessToken, refreshToken: refreshToken, data: newUser })
     } catch (error) {
         next(error)
