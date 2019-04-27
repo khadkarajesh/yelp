@@ -19,8 +19,7 @@ exports.signup = async function (req, res, next) {
     var refreshToken = await jwt.sign({ email: newUser.email }, process.env.APP_SECRET_KEY, { expiresIn: 24 * 60 * 60 })
     res.json({ message: "success", accessToken: accessToken, refreshToken: refreshToken, data: newUser })
 }
-//check code push
-// check branch
+
 exports.signin = async function (req, res) {
     var salt = await bcrypt.genSalt(10)
     var hash = await bcrypt.hash(req.body.password, salt)
