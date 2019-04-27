@@ -8,9 +8,14 @@ var multer = require('multer')
 var morgan = require('morgan')
 var morgonBody = require('morgan-body')
 const upload = require('./services/aws_image_uploader')
+const errorHandler = require('./helpers/errorHandler')
 
 const config = require('config')
 const dbConfig = config.get('app.dbConfig')
+
+const asyncMiddleware = fn => (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+};
 
 require('dotenv').config()
 
@@ -22,7 +27,8 @@ morgonBody(app)
 app.use(bodyparser.urlencoded({ extended: true }))
 app.use('/business', Business)
 app.use('/category', Category)
-app.use('/auth', User)
+app.use('/auth', asyncMiddleware(User))
+app.use(errorHandler)
 
 
 mongoose.connect(`mongodb://${dbConfig.host}/${dbConfig.dbName}}`, { useNewUrlParser: true })
