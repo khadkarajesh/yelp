@@ -13,9 +13,6 @@ const errorHandler = require('./helpers/errorHandler')
 const config = require('config')
 const dbConfig = config.get('app.dbConfig')
 
-const asyncMiddleware = fn => (req, res, next) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-};
 
 require('dotenv').config()
 
@@ -27,7 +24,7 @@ morgonBody(app)
 app.use(bodyparser.urlencoded({ extended: true }))
 app.use('/business', Business)
 app.use('/category', Category)
-app.use('/auth', asyncMiddleware(User))
+app.use('/auth', User)
 app.use(errorHandler)
 
 
