@@ -33,24 +33,28 @@ exports.signup = async function (req, res, next) {
     }
 }
 
-exports.signin = async function (req, res) {
-    var salt = await bcrypt.genSalt(10)
-    var hash = await bcrypt.hash(req.body.password, salt)
-    var user = await User.findOne({ email: req.body.username, password: hash })
-    if (!user) return res.status(401).send({ error: { code: 401, message: "Invalid username/password" } })
+exports.signin = async function (req, res, next) {
+    try {
+        var salt = await bcrypt.genSalt(10)
+        var hash = await bcrypt.hash(req.body.password, salt)
+        var user = await User.findOne({ email: req.body.username, password: hash })
+        if (!user) throw new AppError('Invalid username/password', 401)
 
-    var accessToken = await jwt.sign({ email: user.email },
-        process.env.APP_SECRET_KEY,
-        { expiresIn: 60 * 60 })
-    var refreshToken = await jwt.sign({ email: user.email },
-        process.env.APP_SECRET_KEY,
-        { expiresIn: 24 * 60 * 60 })
-    user.refreshToken.push(refreshToken)
-    await user.save()
-    return res.json({
-        message: "success",
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-        data: user
-    })
+        var accessToken = await jwt.sign({ email: user.email },
+            process.env.APP_SECRET_KEY,
+            { expiresIn: 60 * 60 })
+        var refreshToken = await jwt.sign({ email: user.email },
+            process.env.APP_SECRET_KEY,
+            { expiresIn: 24 * 60 * 60 })
+        user.refreshToken.push(refreshToken)
+        await user.save()
+        return res.json({
+            message: "success",
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            data: user
+        })
+    } catch (error) {
+        next(error)
+    }
 }
