@@ -18,10 +18,13 @@
   "homepage": "https://github.com/khadkarajesh/crit-backend#readme",
   "dependencies": {
     "aws-sdk": "^2.437.0",
+    "bcrypt": "^3.0.6",
     "body-parser": "^1.18.3",
     "config": "^3.1.0",
     "dotenv": "^7.0.0",
     "express": "^4.16.4",
+    "express-jwt": "^5.3.1",
+    "jsonwebtoken": "^8.5.1",
     "mongodb": "^3.2.2",
     "mongoose": "^5.4.20",
     "morgan": "^1.9.1",
