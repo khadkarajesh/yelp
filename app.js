@@ -3,13 +3,16 @@ var bodyparser = require('body-parser')
 var mongoose = require('mongoose')
 var Business = require('./routes/business')
 var Category = require('./routes/category')
+var User = require('./routes/user')
 var multer = require('multer')
 var morgan = require('morgan')
 var morgonBody = require('morgan-body')
 const upload = require('./services/aws_image_uploader')
+const errorHandler = require('./helpers/errorHandler')
 
 const config = require('config')
 const dbConfig = config.get('app.dbConfig')
+
 
 require('dotenv').config()
 
@@ -21,6 +24,8 @@ morgonBody(app)
 app.use(bodyparser.urlencoded({ extended: true }))
 app.use('/business', Business)
 app.use('/category', Category)
+app.use('/auth', User)
+app.use(errorHandler)
 
 
 mongoose.connect(`mongodb://${dbConfig.host}/${dbConfig.dbName}}`, { useNewUrlParser: true })
@@ -31,10 +36,10 @@ app.post('/upload', function (req, res) {
         if (err) {
             return res.status(422).send({ errors: [{ title: 'Image Upload Error', detail: err.message }] });
         }
-        req.files.forEach(function(element){
+        req.files.forEach(function (element) {
             console.log(element.location)
         })
-        return res.json({ 'imageUrl':  "uploaded successfully"});
+        return res.json({ 'imageUrl': "uploaded successfully" });
     })
 })
 
