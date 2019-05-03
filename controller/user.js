@@ -6,22 +6,29 @@ const AppError = require('../helpers/AppError')
 module.exports = {
     signup,
     signin,
-    getUserByEmail
 }
+
+const PASSWORD_VALIDATION_REGEX = /^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{6,}$/
+const MSG_EMAIL_ALREADY_EXIST = 'This email is already registered'
+const MSG_INVALID_PASSWORD = 'Password must be length of min 6 must contain at least 1 number,1 lowercase, 1 capital letter, 1 special character'
+const ACCESS_TOKEN_EXPIRY_TIME = 60 * 60
+const REFRESH_TOKEN_EXPIRY_TIME = 24 * 60 * 60
+const INVALID_PASSWORD = 'Invalid username/password'
+
 
 async function signup(req, res, next) {
     try {
         var user = await User.findOne({ email: req.body.email })
-        if (user) throw new AppError("This email is already registered", 409)
-        var valid = /^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{6,}$/.test(req.body.password)
+        if (user) throw new AppError(MSG_EMAIL_ALREADY_EXIST, 409)
+        var valid = PASSWORD_VALIDATION_REGEX.test(req.body.password)
         if (!valid) {
-            throw new AppError("Password must be length of min 6 must contain at least 1 number,1 lowercase, 1 capital letter, 1 special character", 400)
+            throw new AppError(MSG_INVALID_PASSWORD, 400)
         }
         var salt = await bcrypt.genSalt(10)
         var hash = await bcrypt.hash(req.body.password, salt)
 
-        var accessToken = await jwt.sign({ email: req.body.email }, process.env.APP_SECRET_KEY, { expiresIn: 60 * 60 })
-        var refreshToken = await jwt.sign({ email: req.body.email }, process.env.APP_SECRET_KEY, { expiresIn: 24 * 60 * 60 })
+        var accessToken = await jwt.sign({ email: req.body.email }, process.env.APP_SECRET_KEY, { expiresIn: ACCESS_TOKEN_EXPIRY_TIME })
+        var refreshToken = await jwt.sign({ email: req.body.email }, process.env.APP_SECRET_KEY, { expiresIn: REFRESH_TOKEN_EXPIRY_TIME })
 
         var newUser = await new User({
             first_name: req.body.first_name,
@@ -40,9 +47,8 @@ async function signup(req, res, next) {
 
 async function signin(req, res, next) {
     try {
-        var salt = await bcrypt.genSalt(10)
         var user = await User.findOne({ email: req.body.username })
-        if (!user) throw new AppError('Invalid username/password', 401)
+        if (!user) throw new AppError(INVALID_PASSWORD, 401)
 
         var result = await bcrypt.compare(req.body.password, user.password)
         if (result) {
@@ -64,8 +70,4 @@ async function signin(req, res, next) {
     } catch (error) {
         next(error)
     }
-}
-
-async function getUserByEmail(email) {
-    return await User.findOne({ email: email })
 }
