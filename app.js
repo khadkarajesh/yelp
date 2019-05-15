@@ -11,6 +11,7 @@ var cors = require('cors')
 var morgonBody = require('morgan-body')
 const upload = require('./services/aws_image_uploader')
 const errorHandler = require('./helpers/errorHandler')
+const googleUtil = require('./helpers/googleUtil')
 
 const config = require('config')
 const dbConfig = config.get('app.dbConfig')
@@ -24,6 +25,7 @@ app.use(morgan('dev'))
 app.use(bodyparser.json())
 morgonBody(app)
 app.use(bodyparser.urlencoded({ extended: false }))
+app.post('/auth/google', googleUtil.getGoogleAccountFromCode)
 app.use(jwt())
 app.use('/business', Business)
 app.use('/category', Category)
@@ -31,21 +33,21 @@ app.use('/auth', User)
 app.use(errorHandler)
 
 
-mongoose.connect(`mongodb://${dbConfig.host}/${dbConfig.dbName}}`, { useNewUrlParser: true })
+mongoose.connect(`mongodb://${dbConfig.host}/${dbConfig.dbName}`, { useNewUrlParser: true })
 
 app.post('/upload', function (req, res) {
-    console.log(req.files)
-    upload(req, res, function (err) {
-        if (err) {
-            return res.status(422).send({ errors: [{ title: 'Image Upload Error', detail: err.message }] });
-        }
-        req.files.forEach(function (element) {
-            console.log(element.location)
-        })
-        return res.json({ 'imageUrl': "uploaded successfully" });
+  console.log(req.files)
+  upload(req, res, function (err) {
+    if (err) {
+      return res.status(422).send({ errors: [{ title: 'Image Upload Error', detail: err.message }] });
+    }
+    req.files.forEach(function (element) {
+      console.log(element.location)
     })
+    return res.json({ 'imageUrl': "uploaded successfully" });
+  })
 })
 
 app.listen(3000, function () {
-    console.log(process.env.DB_HOST)
+  console.log(process.env.DB_HOST)
 })
