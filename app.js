@@ -25,7 +25,19 @@ app.use(morgan('dev'))
 app.use(bodyparser.json())
 morgonBody(app)
 app.use(bodyparser.urlencoded({ extended: false }))
-app.post('/auth/google', googleUtil.getGoogleAccountFromCode)
+app.post('/auth/google', async (req, res) => {
+  // const { google } = require('googleapis')
+
+  // const oauth2 = google.oauth2('v2');
+  // const OAuth2 = google.auth.OAuth2;
+
+  // const authClient = new OAuth2(
+  //   process.env.GOOGLE_CLIENT_ID,
+  //   process.env.GOOGLE_CLIENT_SECRET,
+  // );
+  var userinfo = await googleUtil.getUserInfo(req.body.accessToken)
+  console.log(userinfo)
+})
 app.use(jwt())
 app.use('/business', Business)
 app.use('/category', Category)
