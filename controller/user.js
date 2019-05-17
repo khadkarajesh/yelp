@@ -29,19 +29,14 @@ async function signup(req, res, next) {
         var salt = await bcrypt.genSalt(10)
         var hash = await bcrypt.hash(req.body.password, salt)
 
-        var accessToken = await jwt.sign({ email: req.body.email }, process.env.APP_SECRET_KEY, { expiresIn: ACCESS_TOKEN_EXPIRY_TIME })
-        var refreshToken = await jwt.sign({ email: req.body.email }, process.env.APP_SECRET_KEY, { expiresIn: REFRESH_TOKEN_EXPIRY_TIME })
-
         var newUser = await new User({
-            first_name: req.body.first_name,
-            middle_name: req.body.middle_name,
-            last_name: req.body.last_name,
-            email: req.body.email,
-            password: hash,
-            refreshToken: refreshToken
+            "local": {
+                name: req.body.name,
+                email: req.body.email,
+                password: hash
+            }
         }).save()
-
-        res.json({ message: "success", accessToken: accessToken, refreshToken: refreshToken, data: newUser })
+        res.json({ message: "success", data: newUser.toJSON().local})
     } catch (error) {
         next(error)
     }
@@ -79,7 +74,7 @@ async function authorizeByGoogle(req, res, next) {
     try {
         console.log("reached here")
         var userInfo = googleUtil.getUserInfo(req.body.accessToken)
-        var user = await User.findOne({ gmail_id: userInfo.id })
+        var user = await User.findOne({ google: { id: userInfo.id } })
         var accessToken = await jwt.sign({ email: userInfo.email },
             process.env.APP_SECRET_KEY,
             { expiresIn: 60 * 60 })

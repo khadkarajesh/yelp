@@ -1,21 +1,27 @@
 var mongoose = require('mongoose')
-var schema = mongoose.Schema({
-    first_name: { type: String, required: true },
-    middle_name: { type: String },
-    last_name: { type: String, required: true },
-    email: { type: String, required: true },
-    password: {
-        type: String,
-        required: true
+var Schema = mongoose.Schema
+var mongooseHidden = require('mongoose-hidden')()
+var UserSchema = new Schema({
+    local: {
+        email: String,
+        password: { type: String, hide: true },
+        name: String,
+        email_verified: { type: Boolean, default:false }
     },
-    refreshToken: [{ type: String }],
-    gmail_id: { type: String }
+    facebook: {
+        id: String,
+        token: String,
+        email: String,
+        name: String
+    },
+    google: {
+        id: String,
+        token: String,
+        email: String,
+        name: String
+    },
+    refreshToken: [{ type: String }]
 })
 
-schema.methods.toJSON = function () {
-    var obj = this.toObject()
-    delete obj.password
-    delete obj.refreshToken
-    return obj
-}
-module.exports = mongoose.model("user", schema)
+UserSchema.plugin(mongooseHidden)
+module.exports = mongoose.model("user", UserSchema)
