@@ -5,10 +5,11 @@ var schema = mongoose.Schema({
     last_name: { type: String, required: true },
     email: { type: String, required: true },
     password: {
-        type:String,
-        required:true
+        type: String,
+        required: true
     },
-    refreshToken: [{ type: String }]
+    refreshToken: [{ type: String }],
+    gmail_id: { type: String }
 })
 
 schema.methods.toJSON = function () {

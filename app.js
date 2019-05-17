@@ -25,25 +25,15 @@ app.use(morgan('dev'))
 app.use(bodyparser.json())
 morgonBody(app)
 app.use(bodyparser.urlencoded({ extended: false }))
-app.post('/auth/google', async (req, res) => {
-  // const { google } = require('googleapis')
-
-  // const oauth2 = google.oauth2('v2');
-  // const OAuth2 = google.auth.OAuth2;
-
-  // const authClient = new OAuth2(
-  //   process.env.GOOGLE_CLIENT_ID,
-  //   process.env.GOOGLE_CLIENT_SECRET,
-  // );
-  var userinfo = await googleUtil.getUserInfo(req.body.accessToken)
-  console.log(userinfo)
-})
+// app.post('/auth/google', async (req, res) => {
+//   var userinfo = await googleUtil.getUserInfo(req.body.accessToken)
+//   console.log(userinfo)
+// })
 app.use(jwt())
+app.use('/auth', User)
 app.use('/business', Business)
 app.use('/category', Category)
-app.use('/auth', User)
 app.use(errorHandler)
-
 
 mongoose.connect(`mongodb://${dbConfig.host}/${dbConfig.dbName}`, { useNewUrlParser: true })
 

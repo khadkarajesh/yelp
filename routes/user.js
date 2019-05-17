@@ -7,4 +7,7 @@ router.route('/signin').
 router.route('/signup')
     .post(User.signup)
 
+router.route('/google')
+      .post(User.authorizeByGoogle)
+
 module.exports = router

@@ -2,10 +2,12 @@ var User = require('../db/models/user')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const AppError = require('../helpers/AppError')
+const googleUtil = require('../helpers/googleUtil')
 
 module.exports = {
     signup,
     signin,
+    authorizeByGoogle
 }
 
 const PASSWORD_VALIDATION_REGEX = /^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{6,}$/
@@ -69,5 +71,50 @@ async function signin(req, res, next) {
         }
     } catch (error) {
         next(error)
+    }
+}
+
+
+async function authorizeByGoogle(req, res, next) {
+    try {
+        console.log("reached here")
+        var userInfo = googleUtil.getUserInfo(req.body.accessToken)
+        var user = await User.findOne({ gmail_id: userInfo.id })
+        var accessToken = await jwt.sign({ email: userInfo.email },
+            process.env.APP_SECRET_KEY,
+            { expiresIn: 60 * 60 })
+        var refreshToken = await jwt.sign({ email: userInfo.email },
+            process.env.APP_SECRET_KEY,
+            { expiresIn: 24 * 60 * 60 })
+        console.log(user)
+        if (user) {
+            console.log(`inside user exist ${refreshToken}`)
+            user.refreshToken.push(refreshToken)
+            await user.save()
+            return res.json({
+                message: "success",
+                accessToken: accessToken,
+                refreshToken: refreshToken,
+                data: user
+            })
+        } else {
+            console.log('inside user doesnt exist')
+            var newUser = await new User({
+                first_name: userInfo.given_name,
+                last_name: userInfo.family_name,
+                email: userInfo.email,
+                refreshToken: refreshToken,
+                gmail_id: userInfo.id
+            }).save()
+            return res.json({
+                message: 'success',
+                accessToken: accessToken,
+                refreshToken: refreshToken,
+                data: newUser
+            })
+        }
+
+    } catch (err) {
+        next(err)
     }
 }
