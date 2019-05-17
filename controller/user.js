@@ -3,6 +3,8 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const AppError = require('../helpers/AppError')
 const googleUtil = require('../helpers/googleUtil')
+const nodemailer = require('nodemailer')
+const name = require('project-name')
 
 module.exports = {
     signup,
@@ -36,16 +38,45 @@ async function signup(req, res, next) {
                 password: hash
             }
         }).save()
-        res.json({ message: "success", data: newUser.toJSON().local})
+
+        console.log(`${req.headers.host}`)
+        var token = await jwt.sign({ id: newUser._id },
+            process.env.APP_SECRET_KEY,
+            { expiresIn: '24h' })
+
+        await User.updateOne({ email_verfication_token: token })
+        sendEmail(req.body.email)
+        res.json({ message: "success", data: newUser.toJSON().local })
     } catch (error) {
         next(error)
     }
+}
+
+async function sendEmail(email) {
+    var host = process.env.MAIL_SENDER_HOST
+    let transporter = nodemailer.createTransport({
+        host: process.env.MAIL_SENDER_HOST,
+        port: process.env.MAIL_SENDER_PORT,
+        secure: true,
+        auth: {
+            user: process.env.MAIL_SENDER_USERNAME,
+            pass: process.env.MAIL_SENDER_PASSWORD
+        }
+    });
+    let info = await transporter.sendMail({
+        from: '"Crit" <rajeshkhadka@incwelltechnology.com>', // sender address
+        to: email, // list of receivers
+        subject: "Email Verification", // Subject line
+        text: "Hello world?", // plain text body
+        html: "<b>Hello world?</b>" // html body
+    });
 }
 
 async function signin(req, res, next) {
     try {
         var user = await User.findOne({ email: req.body.username })
         if (!user) throw new AppError(INVALID_PASSWORD, 401)
+        if (!user.local.email_verified) throw new AppError("Your email has not verified", 401)
 
         var result = await bcrypt.compare(req.body.password, user.password)
         if (result) {
