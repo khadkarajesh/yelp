@@ -46,7 +46,8 @@ async function signup(req, res, next) {
             { expiresIn: '24h' })
 
         await User.updateOne({ email_verfication_token: token })
-        awsEmailSender.sendEmail('rajesh.k.khadka@gmail.com', "Hey! Welcome", "This is the body of email", res)
+        //var encodedUrl = base64_encode(`http://localhost:3000/email-verify?token=${token}`)
+        awsEmailSender.sendEmail('rajesh.k.khadka@gmail.com', "Hey! Welcome", "This is the body of email")
         res.json({ message: "success", data: newUser.toJSON().local })
     } catch (error) {
         next(error)
