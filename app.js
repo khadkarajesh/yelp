@@ -22,6 +22,7 @@ require('dotenv').config()
 
 var app = express()
 app.use(morgan('dev'))
+app.set('view engine', 'pug')
 app.use(bodyparser.json())
 morgonBody(app)
 app.use(bodyparser.urlencoded({ extended: false }))
