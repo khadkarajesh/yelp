@@ -9,7 +9,7 @@ AWS.config.update({
 
 const ses = new AWS.SES({ apiVersion: '2010-12-01' });
 
-async function sendEmail(to, subject, message, from) {
+async function sendVerificationEmail(to, encodedUrl) {
     const params = {
         Destination: {
             ToAddresses: [to]
@@ -18,22 +18,16 @@ async function sendEmail(to, subject, message, from) {
             Body: {
                 Html: {
                     Charset: 'UTF-8',
-                    Data: generateEmailVerificationLink('rajesh Khadka')
-                },
-                /* replace Html attribute with the following if you want to send plain text emails. 
-                Text: {
-                    Charset: "UTF-8",
-                    Data: message
+                    Data: generateEmailVerificationLink('rajesh Khadka', encodedUrl)
                 }
-             */
             },
             Subject: {
                 Charset: 'UTF-8',
-                Data: subject
+                Data: "Email Verification"
             }
         },
-        ReturnPath: from ? from : config.aws.ses.from.default,
-        Source: from ? from : config.aws.ses.from.default,
+        ReturnPath: config.aws.ses.from.default,
+        Source: config.aws.ses.from.default,
     }
     ses.sendEmail(params, (err, data) => {
         if (err) {
@@ -45,7 +39,7 @@ async function sendEmail(to, subject, message, from) {
 }
 
 
-function generateEmailVerificationLink(username){
+function generateEmailVerificationLink(username) {
     return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
     <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
@@ -225,7 +219,7 @@ function generateEmailVerificationLink(username){
               <!-- Logo -->
               <tr>
                 <td class="email-masthead">
-                  <a class="email-masthead_name">Canvas</a>
+                  <a class="email-masthead_name">Crit</a>
                 </td>
               </tr>
               <!-- Email Body -->
@@ -248,19 +242,19 @@ function generateEmailVerificationLink(username){
                                 <w:anchorlock/>
                                 <center style="color:#ffffff;font-family:sans-serif;font-size:15px;">Verify Email</center>
                               </v:roundrect><![endif]-->
-                                <a href="url" class="button button--blue">Verify Email</a>
+                                <a href="${encodedUrl}" class="button button--blue"  style="color:#ffffff">Verify Email</a>
                               </div>
                             </td>
                           </tr>
                         </table>
-                        <p>Thanks,<br>The Canvas Team</p>
+                        <p>Thanks,<br>The Crit Team</p>
                         <!-- Sub copy -->
                         <table class="body-sub">
                           <tr>
                             <td>
                               <p class="sub">If you’re having trouble clicking the button, copy and paste the URL below into your web browser.
                               </p>
-                              <p class="sub"><a href="{{action_url}}">{{action_url}}</a></p>
+                              <p class="sub"><a href="${encodedUrl}">${encodedUrl}</a></p>
                             </td>
                           </tr>
                         </table>
@@ -291,4 +285,4 @@ function generateEmailVerificationLink(username){
     </html>`
 }
 
-module.exports = { sendEmail }
+module.exports = { sendVerificationEmail }
