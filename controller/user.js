@@ -23,7 +23,7 @@ const INVALID_PASSWORD = 'Invalid username/password'
 
 async function signup(req, res, next) {
     try {
-        var user = await User.findOne({ email: req.body.email })
+        var user = await User.findOne({ 'local.email': req.body.email })
         if (user) throw new AppError(MSG_EMAIL_ALREADY_EXIST, 409)
         var valid = PASSWORD_VALIDATION_REGEX.test(req.body.password)
         if (!valid) {
