@@ -3,9 +3,8 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const AppError = require('../helpers/AppError')
 const googleUtil = require('../helpers/googleUtil')
-const emailSender = require('../helpers/emailSender')
 const awsEmailSender = require('../helpers/awsEmailSender')
-var mail = require('../helpers/emailSender')
+const {validationResult } = require('express-validator/check')
 
 module.exports = {
     signup,
@@ -13,9 +12,7 @@ module.exports = {
     authorizeByGoogle
 }
 
-const PASSWORD_VALIDATION_REGEX = /^(?=.*[\d])(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*])[\w!@#$%^&*]{6,}$/
 const MSG_EMAIL_ALREADY_EXIST = 'This email is already registered'
-const MSG_INVALID_PASSWORD = 'Password must be length of min 6 must contain at least 1 number,1 lowercase, 1 capital letter, 1 special character'
 const ACCESS_TOKEN_EXPIRY_TIME = 60 * 60
 const REFRESH_TOKEN_EXPIRY_TIME = 24 * 60 * 60
 const INVALID_PASSWORD = 'Invalid username/password'
@@ -23,6 +20,11 @@ const INVALID_PASSWORD = 'Invalid username/password'
 
 async function signup(req, res, next) {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+          return res.status(422).json({ errors: errors.array() });
+        }
+
         var user = await User.findOne({ 'local.email': req.body.email })
         if (user) throw new AppError(MSG_EMAIL_ALREADY_EXIST, 409)
         var valid = PASSWORD_VALIDATION_REGEX.test(req.body.password)
