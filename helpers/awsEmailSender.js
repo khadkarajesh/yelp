@@ -9,7 +9,7 @@ AWS.config.update({
 
 const ses = new AWS.SES({ apiVersion: '2010-12-01' });
 
-async function sendVerificationEmail(to, encodedUrl) {
+async function sendVerificationEmail(username, to, encodedUrl) {
     const params = {
         Destination: {
             ToAddresses: [to]
@@ -18,7 +18,7 @@ async function sendVerificationEmail(to, encodedUrl) {
             Body: {
                 Html: {
                     Charset: 'UTF-8',
-                    Data: generateEmailVerificationLink('rajesh Khadka', encodedUrl)
+                    Data: generateEmailVerificationLink(username, encodedUrl)
                 }
             },
             Subject: {
@@ -37,7 +37,6 @@ async function sendVerificationEmail(to, encodedUrl) {
         }
     });
 }
-
 
 function generateEmailVerificationLink(username) {
     return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">

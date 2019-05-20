@@ -10,7 +10,8 @@ module.exports = {
     signup,
     signin,
     authorizeByGoogle,
-    verifyEmail
+    verifyEmail,
+    resendEmailVerification
 }
 
 const MSG_EMAIL_ALREADY_EXIST = 'This email is already registered'
@@ -42,7 +43,7 @@ async function signup(req, res, next) {
             process.env.APP_SECRET_KEY,
             { expiresIn: '24h' })
         encodedUrl = `http://localhost:3000/email-verification?token=${token}`
-        awsEmailSender.sendVerificationEmail('rajesh.k.khadka@gmail.com', encodedUrl)
+        awsEmailSender.sendVerificationEmail(req.body.name,'rajesh.k.khadka@gmail.com', encodedUrl)
         res.json({ message: "success", data: newUser.toJSON().local })
     } catch (error) {
         next(error)
@@ -53,18 +54,35 @@ async function verifyEmail(req, res, next) {
     try {
         var token = await jwt.verify(req.body.token, process.env.APP_SECRET_KEY)
         var user = await User.findOne({ _id: token.id })
-        if(!user) throw new AppError('User not found', 404)
+        if (!user) throw new AppError('User not found', 404)
         if (user.local.email_verified) {
             res.json({ status: 'success', data: 'Email has been verified already' })
         } else {
             user.local.email_verified = true
             var updatedUser = await user.save()
-            if(updatedUser.local.email_verified){
-                res.json({status: 'success', data: 'Email has been verified successfully'})    
+            if (updatedUser.local.email_verified) {
+                res.json({ status: 'success', data: 'Email has been verified successfully' })
             }
         }
     } catch (error) {
         console.log(error)
+        next(error)
+    }
+}
+
+
+async function resendEmailVerification(req, res, next) {
+    try {
+        var user = await User.findOne({ 'local.email': req.body.email })
+        if (!user) throw new AppError('User not found', 404)
+        if (user.local.email_verified) res.json({ status: 'success', data: 'Email has been verified already' })
+        var token = await jwt.sign({ id: user._id },
+            process.env.APP_SECRET_KEY,
+            { expiresIn: '24h' })
+        encodedUrl = `http://localhost:3000/email-verification?token=${token}`
+        awsEmailSender.sendVerificationEmail('',req.body.email, encodedUrl)
+        res.json({ message: "success", data: "Successfully sent a verification email" })
+    } catch (error) {
         next(error)
     }
 }

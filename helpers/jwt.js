@@ -9,7 +9,8 @@ function jwt() {
             '/auth/signin',
             '/auth/signup',
             '/auth/google',
-            '/auth/email-verification'
+            '/auth/email-verification',
+            '/auth/resend-verification-email'
         ]
     });
 }

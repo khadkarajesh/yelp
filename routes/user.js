@@ -12,6 +12,10 @@ router.route('/google')
     .post(User.authorizeByGoogle)
 
 router.route('/email-verification')
-.post(User.verifyEmail)
+    .post(User.verifyEmail)
+
+router.route('/resend-verification-email')
+    .post(User.resendEmailVerification)
+
 
 module.exports = router
