@@ -11,4 +11,7 @@ router.route('/signup')
 router.route('/google')
     .post(User.authorizeByGoogle)
 
+router.route('/email-verification')
+.post(User.verifyEmail)
+
 module.exports = router

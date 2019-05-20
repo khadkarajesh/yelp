@@ -8,7 +8,8 @@ function jwt() {
         path: [
             '/auth/signin',
             '/auth/signup',
-            '/auth/google'
+            '/auth/google',
+            '/auth/email-verification'
         ]
     });
 }

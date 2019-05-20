@@ -4,17 +4,16 @@ const jwt = require('jsonwebtoken')
 const AppError = require('../helpers/AppError')
 const googleUtil = require('../helpers/googleUtil')
 const awsEmailSender = require('../helpers/awsEmailSender')
-const {validationResult } = require('express-validator/check')
+const { validationResult } = require('express-validator/check')
 
 module.exports = {
     signup,
     signin,
-    authorizeByGoogle
+    authorizeByGoogle,
+    verifyEmail
 }
 
 const MSG_EMAIL_ALREADY_EXIST = 'This email is already registered'
-const ACCESS_TOKEN_EXPIRY_TIME = 60 * 60
-const REFRESH_TOKEN_EXPIRY_TIME = 24 * 60 * 60
 const INVALID_PASSWORD = 'Invalid username/password'
 
 
@@ -22,15 +21,11 @@ async function signup(req, res, next) {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-          return res.status(422).json({ errors: errors.array() });
+            return res.status(422).json({ errors: errors.array() });
         }
 
         var user = await User.findOne({ 'local.email': req.body.email })
         if (user) throw new AppError(MSG_EMAIL_ALREADY_EXIST, 409)
-        var valid = PASSWORD_VALIDATION_REGEX.test(req.body.password)
-        if (!valid) {
-            throw new AppError(MSG_INVALID_PASSWORD, 400)
-        }
         var salt = await bcrypt.genSalt(10)
         var hash = await bcrypt.hash(req.body.password, salt)
 
@@ -46,12 +41,30 @@ async function signup(req, res, next) {
         var token = await jwt.sign({ id: newUser._id },
             process.env.APP_SECRET_KEY,
             { expiresIn: '24h' })
-
-        await User.updateOne({ email_verfication_token: token })
         encodedUrl = `http://localhost:3000/email-verification?token=${token}`
         awsEmailSender.sendVerificationEmail('rajesh.k.khadka@gmail.com', encodedUrl)
         res.json({ message: "success", data: newUser.toJSON().local })
     } catch (error) {
+        next(error)
+    }
+}
+
+async function verifyEmail(req, res, next) {
+    try {
+        var token = await jwt.verify(req.body.token, process.env.APP_SECRET_KEY)
+        var user = await User.findOne({ _id: token.id })
+        if(!user) throw new AppError('User not found', 404)
+        if (user.local.email_verified) {
+            res.json({ status: 'success', data: 'Email has been verified already' })
+        } else {
+            user.local.email_verified = true
+            var updatedUser = await user.save()
+            if(updatedUser.local.email_verified){
+                res.json({status: 'success', data: 'Email has been verified successfully'})    
+            }
+        }
+    } catch (error) {
+        console.log(error)
         next(error)
     }
 }
