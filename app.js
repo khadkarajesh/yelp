@@ -11,8 +11,6 @@ var cors = require('cors')
 var morgonBody = require('morgan-body')
 const upload = require('./services/aws_image_uploader')
 const errorHandler = require('./helpers/errorHandler')
-const googleUtil = require('./helpers/googleUtil')
-const { body, check, validationResult } = require('express-validator/check')
 
 const config = require('config')
 const dbConfig = config.get('app.dbConfig')
@@ -27,16 +25,6 @@ app.set('view engine', 'pug')
 app.use(bodyparser.json())
 morgonBody(app)
 app.use(bodyparser.urlencoded({ extended: false }))
-app.post('/comment', [
-  body('email', 'enter valid email address')
-    .isEmail()
-    .normalizeEmail()
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(422).json({ errors: errors.array() });
-  }
-});
 app.use(jwt())
 app.use('/auth', User)
 app.use('/business', Business)
