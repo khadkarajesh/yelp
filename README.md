@@ -1,2 +1,5 @@
 # yelp-clone
-yelp clone service
+Featues:
+
+- Authentication using email
+- Authentication using social media
