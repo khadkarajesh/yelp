@@ -30,13 +30,34 @@ async function signup(req, res, next) {
         var salt = await bcrypt.genSalt(10)
         var hash = await bcrypt.hash(req.body.password, salt)
 
-        var newUser = await new User({
-            "local": {
+        var gmailUser = await User.findOne({ 'google.email': req.body.email })
+        var facebookUser = await User.findOne({ 'facebook.email': req.body.email })
+        if (gmailUser.google.email === req.body.email) {
+            gmailUser.local = {
                 name: req.body.name,
                 email: req.body.email,
-                password: hash
+                password: hash,
+                email_verified:true
             }
-        }).save()
+            newUser = await gmailUser.save()
+        } else if (facebookUser.facebook.email === req.body.email) {
+            facebookUser.local = {
+                name: req.body.name,
+                email: req.body.email,
+                password: hash,
+                email_verified:true
+            }
+            newUser = await facebookUser.save()
+        }
+        else {
+            newUser = await new User({
+                "local": {
+                    name: req.body.name,
+                    email: req.body.email,
+                    password: hash
+                }
+            }).save()
+        }
 
         console.log(`${req.headers.host}`)
         var token = await jwt.sign({ id: newUser._id },
