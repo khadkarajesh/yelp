@@ -43,7 +43,7 @@ async function signup(req, res, next) {
             process.env.APP_SECRET_KEY,
             { expiresIn: '24h' })
         encodedUrl = `http://localhost:3000/email-verification?token=${token}`
-        awsEmailSender.sendVerificationEmail(req.body.name,'rajesh.k.khadka@gmail.com', encodedUrl)
+        awsEmailSender.sendVerificationEmail(req.body.name, 'rajesh.k.khadka@gmail.com', encodedUrl)
         res.json({ message: "success", data: newUser.toJSON().local })
     } catch (error) {
         next(error)
@@ -80,7 +80,7 @@ async function resendEmailVerification(req, res, next) {
             process.env.APP_SECRET_KEY,
             { expiresIn: '24h' })
         encodedUrl = `http://localhost:3000/email-verification?token=${token}`
-        awsEmailSender.sendVerificationEmail('',req.body.email, encodedUrl)
+        awsEmailSender.sendVerificationEmail('', req.body.email, encodedUrl)
         res.json({ message: "success", data: "Successfully sent a verification email" })
     } catch (error) {
         next(error)
@@ -91,11 +91,11 @@ async function resendEmailVerification(req, res, next) {
 
 async function signin(req, res, next) {
     try {
-        var user = await User.findOne({ email: req.body.username })
+        var user = await User.findOne({ 'local.email': req.body.username })
         if (!user) throw new AppError(INVALID_PASSWORD, 401)
         if (!user.local.email_verified) throw new AppError("Your email has not verified", 401)
 
-        var result = await bcrypt.compare(req.body.password, user.password)
+        var result = await bcrypt.compare(req.body.password, user.local.password)
         if (result) {
             var accessToken = await jwt.sign({ email: user.email },
                 process.env.APP_SECRET_KEY,
@@ -106,7 +106,7 @@ async function signin(req, res, next) {
             user.refreshToken.push(refreshToken)
             await user.save()
             return res.json({
-                message: "success",
+                status: "success",
                 accessToken: accessToken,
                 refreshToken: refreshToken,
                 data: user
@@ -120,41 +120,61 @@ async function signin(req, res, next) {
 
 async function authorizeByGoogle(req, res, next) {
     try {
-        console.log("reached here")
-        var userInfo = googleUtil.getUserInfo(req.body.accessToken)
-        var user = await User.findOne({ google: { id: userInfo.id } })
-        var accessToken = await jwt.sign({ email: userInfo.email },
+        var userInfo = await googleUtil.getUserInfo(req.body.accessToken)
+        console.log(userInfo.data)
+        var user = await User.findOne({ 'google.id': userInfo.data.id })
+        var accessToken = await jwt.sign({ id: userInfo.data.id },
             process.env.APP_SECRET_KEY,
             { expiresIn: 60 * 60 })
-        var refreshToken = await jwt.sign({ email: userInfo.email },
+        var refreshToken = await jwt.sign({ id: userInfo.data.id },
             process.env.APP_SECRET_KEY,
             { expiresIn: 24 * 60 * 60 })
-        console.log(user)
         if (user) {
-            console.log(`inside user exist ${refreshToken}`)
             user.refreshToken.push(refreshToken)
             await user.save()
             return res.json({
-                message: "success",
+                status: "success",
                 accessToken: accessToken,
                 refreshToken: refreshToken,
-                data: user
+                data: user.google
             })
         } else {
-            console.log('inside user doesnt exist')
-            var newUser = await new User({
-                first_name: userInfo.given_name,
-                last_name: userInfo.family_name,
-                email: userInfo.email,
-                refreshToken: refreshToken,
-                gmail_id: userInfo.id
-            }).save()
-            return res.json({
-                message: 'success',
-                accessToken: accessToken,
-                refreshToken: refreshToken,
-                data: newUser
-            })
+            console.log(userInfo.data.id)
+            var localUser = await User.findOne({ 'local.email': userInfo.data.email })
+            if (localUser) {
+                localUser.google = {
+                    id: userInfo.data.id,
+                    email: userInfo.data.email,
+                    name: userInfo.data.name
+                }
+                await localUser.save()
+                return res.json({
+                    status: 'success',
+                    accessToken: accessToken,
+                    refreshToken: refreshToken,
+                    data: localUser.google
+                })
+            } else {
+                var google = {
+                    googleId: userInfo.data.id,
+                    email: userInfo.data.email,
+                    name: userInfo.data.name
+                }
+                console.log(`im in else  ${google.toJSON}`)
+                var newUser = await new User({
+                    'google': {
+                        id: userInfo.data.id,
+                        email: userInfo.data.email,
+                        name: userInfo.data.name
+                    }
+                }).save()
+                return res.json({
+                    status: 'success',
+                    accessToken: accessToken,
+                    refreshToken: refreshToken,
+                    data: newUser.google
+                })
+            }
         }
 
     } catch (err) {

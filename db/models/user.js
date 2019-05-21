@@ -10,7 +10,6 @@ var UserSchema = new Schema({
     },
     facebook: {
         id: String,
-        token: String,
         email: String,
         name: String
     },
@@ -20,7 +19,7 @@ var UserSchema = new Schema({
         email: String,
         name: String
     },
-    refreshToken: [{ type: String }],
+    refreshToken: [{ type: String , hide:true}],
     email_verfication_token: String
 })
 
