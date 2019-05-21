@@ -1,5 +1,5 @@
 # yelp-clone
-Featues:
+Features:
 
 - Authentication using email
 - Authentication using social media
