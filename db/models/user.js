@@ -19,7 +19,7 @@ var UserSchema = new Schema({
         email: String,
         name: String
     },
-    refreshToken: [{ type: String , hide:true}],
+    refreshToken: [{ type: String, hide: true }],
     email_verfication_token: String
 })
 
