@@ -7,7 +7,10 @@ function jwt() {
     return expressJwt({ secret}).unless({
         path: [
             '/auth/signin',
-            '/auth/signup'
+            '/auth/signup',
+            '/auth/google',
+            '/auth/email-verification',
+            '/auth/resend-verification-email'
         ]
     });
 }

@@ -13,7 +13,11 @@ module.exports = function (err, req, res, next) {
     }
 
     if (err instanceof AppError) {
-        return res.status(err.status).json({ message: err.message })
+        return res.status(err.status).json({ errors: [{ msg: err.message }] })
+    }
+
+    if (err.name === 'TokenExpiredError') {
+        return res.status(401).json({ errors: [{ msg: 'Token has been expired. Please request again to get verification token' }] })
     }
 
     return res.status(500).json({ message: err.message })
