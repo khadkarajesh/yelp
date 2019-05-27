@@ -42,6 +42,8 @@
     "nodemailer": "^6.1.1",
     "nodemailer-ses-transport": "^1.5.1",
     "nodemon": "^1.18.11",
+    "passport": "^0.4.0",
+    "passport-facebook-token": "^3.3.0",
     "swagger-ui-express": "^4.0.2",
     "winston": "^3.2.1"
   }

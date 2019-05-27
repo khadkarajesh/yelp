@@ -10,7 +10,8 @@ function jwt() {
             '/auth/signup',
             '/auth/google',
             '/auth/email-verification',
-            '/auth/resend-verification-email'
+            '/auth/resend-verification-email',
+            '/auth/facebook'
         ]
     });
 }
