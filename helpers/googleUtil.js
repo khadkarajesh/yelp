@@ -8,7 +8,7 @@ const authClient = new OAuth2(
 );
 
 module.exports.getUserInfo = async function (accessToken) {
-    authClient.setCredentials({
+    authClient.setCredaentials({
         access_token: accessToken
     });
     return await oauth2.userinfo.get({ auth: authClient })

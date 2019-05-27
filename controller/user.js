@@ -38,7 +38,7 @@ async function signup(req, res, next) {
                 name: req.body.name,
                 email: req.body.email,
                 password: hash,
-                email_verified:true
+                email_verified: true
             }
             newUser = await gmailUser.save()
         } else if (facebookUser.facebook.email === req.body.email) {
@@ -46,7 +46,7 @@ async function signup(req, res, next) {
                 name: req.body.name,
                 email: req.body.email,
                 password: hash,
-                email_verified:true
+                email_verified: true
             }
             newUser = await facebookUser.save()
         }
