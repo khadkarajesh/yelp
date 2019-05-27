@@ -4,7 +4,6 @@ var mongoose = require('mongoose')
 var Business = require('./routes/business')
 var Category = require('./routes/category')
 var User = require('./routes/user')
-var multer = require('multer')
 var morgan = require('morgan')
 var jwt = require('./helpers/jwt')
 var cors = require('cors')
@@ -14,7 +13,6 @@ const errorHandler = require('./helpers/errorHandler')
 
 const config = require('config')
 const dbConfig = config.get('app.dbConfig')
-
 
 require('dotenv').config()
 

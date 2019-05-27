@@ -12,7 +12,8 @@ module.exports = {
     signin,
     authorizeByGoogle,
     verifyEmail,
-    resendEmailVerification
+    resendEmailVerification,
+    authorizeByFacebook
 }
 
 const MSG_EMAIL_ALREADY_EXIST = 'This email is already registered'
@@ -68,6 +69,7 @@ async function signup(req, res, next) {
         awsEmailSender.sendVerificationEmail(req.body.name, 'rajesh.k.khadka@gmail.com', encodedUrl)
         res.json({ message: "success", data: newUser.toJSON().local })
     } catch (error) {
+        console.log(error)
         next(error)
     }
 }
@@ -201,5 +203,28 @@ async function authorizeByGoogle(req, res, next) {
 
     } catch (err) {
         next(err)
+    }
+}
+
+
+async function authorizeByFacebook(req, res) {
+    var user = req.user
+    if (user) {
+        var accessToken = await jwt.sign({ id: user.id },
+            process.env.APP_SECRET_KEY,
+            { expiresIn: 60 * 60 })
+        var refreshToken = await jwt.sign({ id: user.id },
+            process.env.APP_SECRET_KEY,
+            { expiresIn: 24 * 60 * 60 })
+        user.refreshToken.push(refreshToken)
+        await user.save()
+        res.json({
+            status: "success",
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            data: user.facebook
+        })
+    } else {
+        res.status(401).json({ status: "failure" })
     }
 }
