@@ -2,7 +2,7 @@ const expressJwt = require('express-jwt');
 
 module.exports = jwt;
 
-function jwt() {
+function jwt(req, res, next) {
     const secret = process.env.APP_SECRET_KEY
     return expressJwt({ secret}).unless({
         path: [
