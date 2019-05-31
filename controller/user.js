@@ -5,6 +5,7 @@ const AppError = require('../helpers/AppError')
 const googleUtil = require('../helpers/googleUtil')
 const awsEmailSender = require('../helpers/awsEmailSender')
 const { validationResult } = require('express-validator/check')
+const request = require('request')
 
 
 module.exports = {
@@ -34,7 +35,7 @@ async function signup(req, res, next) {
 
         var gmailUser = await User.findOne({ 'google.email': req.body.email })
         var facebookUser = await User.findOne({ 'facebook.email': req.body.email })
-        if (gmailUser.google.email === req.body.email) {
+        if (gmailUser && gmailUser.google.email === req.body.email) {
             gmailUser.local = {
                 name: req.body.name,
                 email: req.body.email,
@@ -42,7 +43,7 @@ async function signup(req, res, next) {
                 email_verified: true
             }
             newUser = await gmailUser.save()
-        } else if (facebookUser.facebook.email === req.body.email) {
+        } else if (facebookUser && facebookUser.facebook.email === req.body.email) {
             facebookUser.local = {
                 name: req.body.name,
                 email: req.body.email,
@@ -144,63 +145,75 @@ async function signin(req, res, next) {
 
 async function authorizeByGoogle(req, res, next) {
     try {
-        var userInfo = await googleUtil.getUserInfo(req.body.accessToken)
-        console.log(userInfo.data)
-        var user = await User.findOne({ 'google.id': userInfo.data.id })
-        var accessToken = await jwt.sign({ id: userInfo.data.id },
-            process.env.APP_SECRET_KEY,
-            { expiresIn: 60 * 60 })
-        var refreshToken = await jwt.sign({ id: userInfo.data.id },
-            process.env.APP_SECRET_KEY,
-            { expiresIn: 24 * 60 * 60 })
-        if (user) {
-            user.refreshToken.push(refreshToken)
-            await user.save()
-            return res.json({
-                status: "success",
-                accessToken: accessToken,
-                refreshToken: refreshToken,
-                data: user.google
-            })
-        } else {
-            console.log(userInfo.data.id)
-            var localUser = await User.findOne({ 'local.email': userInfo.data.email })
-            if (localUser) {
-                localUser.google = {
-                    id: userInfo.data.id,
-                    email: userInfo.data.email,
-                    name: userInfo.data.name
-                }
-                await localUser.save()
-                return res.json({
-                    status: 'success',
-                    accessToken: accessToken,
-                    refreshToken: refreshToken,
-                    data: localUser.google
-                })
-            } else {
-                var google = {
-                    googleId: userInfo.data.id,
-                    email: userInfo.data.email,
-                    name: userInfo.data.name
-                }
-                console.log(`im in else  ${google.toJSON}`)
-                var newUser = await new User({
-                    'google': {
-                        id: userInfo.data.id,
-                        email: userInfo.data.email,
-                        name: userInfo.data.name
+        request.get(`https://www.googleapis.com/plus/v1/people/me?access_token=${req.body.accessToken}`,
+            async (error, response, body) => {
+                const userInfo = JSON.parse(response.body)
+                var user = await User.findOne({ 'google.id': userInfo.id })
+                var accessToken = await jwt.sign({ id: userInfo.id },
+                    process.env.APP_SECRET_KEY,
+                    { expiresIn: 60 * 60 })
+                var refreshToken = await jwt.sign({ id: userInfo.id },
+                    process.env.APP_SECRET_KEY,
+                    { expiresIn: 24 * 60 * 60 })
+                if (user) {
+                    user.refreshToken.push(refreshToken)
+                    await user.save()
+                    return res.json({
+                        status: "success",
+                        accessToken: accessToken,
+                        refreshToken: refreshToken,
+                        data: user.google
+                    })
+                } else {
+                    var localUser = await User.findOne({ 'local.email': userInfo.emails[0].value })
+                    var facebookUser = await User.findOne({ 'facebook.email': userInfo.emails[0].value })
+                    if (localUser) {
+                        localUser.google = {
+                            id: userInfo.id,
+                            email: userInfo.emails[0].value,
+                            name: userInfo.displayName
+                        }
+                        localUser.refreshToken.push(refreshToken)
+                        await localUser.save()
+                        return res.json({
+                            status: 'success',
+                            accessToken: accessToken,
+                            refreshToken: refreshToken,
+                            data: localUser.google
+                        })
+                    } else if (facebookUser) {
+                        facebookUser.google = {
+                            googleId: userInfo.id,
+                            email: userInfo.emails[0].value,
+                            name: userInfo.displayName
+                        }
+                        facebookUser.refreshToken.push(refreshToken)
+                        var savedUser = await facebookUser.save()
+                        return res.json({
+                            status:'success',
+                            accessToken: accessToken,
+                            refreshToken: refreshToken,
+                            data: savedUser
+                        })
                     }
-                }).save()
-                return res.json({
-                    status: 'success',
-                    accessToken: accessToken,
-                    refreshToken: refreshToken,
-                    data: newUser.google
-                })
-            }
-        }
-
+                    else {
+                        var newUser = await new User({
+                            'google': {
+                                id: userInfo.id,
+                                email: userInfo.emails[0].value,
+                                name: userInfo.displayName
+                            }
+                        }).save()
+                        newUser.refreshToken.push(refreshToken)
+                        return res.json({
+                            status: 'success',
+                            accessToken: accessToken,
+                            refreshToken: refreshToken,
+                            data: newUser.google
+                        })
+                    }
+                }
+            })
     } catch (err) {
         next(err)
     }
