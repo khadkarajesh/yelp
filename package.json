@@ -33,7 +33,7 @@
     "googleapis": "^40.0.0",
     "jsonwebtoken": "^8.5.1",
     "mongodb": "^3.2.2",
-    "mongoose": "^5.4.20",
+    "mongoose": "^5.7.5",
     "mongoose-hidden": "^1.6.1",
     "morgan": "^1.9.1",
     "morgan-body": "^2.4.5",
